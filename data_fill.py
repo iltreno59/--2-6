@@ -36,7 +36,7 @@ def close_conn():
         
 def count_grouped_values(table, column):
     values = []
-    select_query=f"""
+    select_query = f"""
     SELECT {column}, COUNT(*) FROM {table} GROUP BY {column}
     """
     cursor.execute(select_query)
@@ -44,10 +44,50 @@ def count_grouped_values(table, column):
         values.append(row)
     return dict(values)
 
+def count_table_lines(table):
+    value = 0
+    select_query = f"""
+    SELECT COUNT(*) FROM {table}
+    """
+    cursor.execute(select_query)
+    for row in cursor:
+        value = row[0]
+    return value 
+
+def get_first_value_from_column(table, column):
+    value = 0
+    select_query = f"""
+    SELECT {column} FROM {table} LIMIT 1
+    """
+    cursor.execute(select_query)
+    for row in cursor:
+        value = row[0]
+    return value
+
+def get_last_value_from_column(table, column):
+    value = 0
+    select_query = f"""
+    SELECT {column} FROM {table} ORDER BY {column} DESC LIMIT 1 
+    """
+    cursor.execute(select_query)
+    for row in cursor:
+        value = row[0]
+    return value      
+
 def get_all_values_from_table_column(table, column):
     values = []
     select_query = f"""
     SELECT {column} FROM {table}
+    """
+    cursor.execute(select_query)
+    for row in cursor:
+        values.append(row)
+    return values
+
+def get_all_managers_id():
+    values = []
+    select_query = f"""
+    SELECT employee_id FROM staff WHERE employee_role = 'Менеджер'
     """
     cursor.execute(select_query)
     for row in cursor:
@@ -78,25 +118,66 @@ def fill_staff():
             "experience": random.randint(0, 20),
             "birthdate": fake.date_between(start_date=datetime(1970, 1, 1), end_date=datetime(2005, 1, 1)),
             "salary": round(random.randint(30_000, 200_000) / 100) * 100,
-            "room_id": random.choice(get_all_values_from_table_column("service", "room_id"))
+            "room_id": random.choice(get_all_values_from_table_column("rooms", "room_id"))
         }
         insert_query = """
         INSERT INTO staff(employee_name, mail, phone, employee_role, exp, birthday, salary, room_id)
         VALUES
-        (%(name)s, %(mail)s, %(telephone)s, %(role)s, %(experience)s, %(birthdate)s, %(salary)s)
+        (%(name)s, %(mail)s, %(telephone)s, %(role)s, %(experience)s, %(birthdate)s, %(salary)s, %(room_id)s)
         """
         cursor.execute(insert_query, staff_data)
 
 def fill_rooms():
     for i in range(15):
+        auto_bool = random.choice(["TRUE", "FALSE"])
         room_data = {
-            "address": fake.address(),
+            "addres": fake.address(),
             "phone_number": adapt_phone_number(fake.phone_number()),
-
+            "auto": auto_bool,
+            "moto": ("TRUE" if auto_bool == "FALSE" else random.choice(["TRUE", "FALSE"])),
+            "city": fake.city(),
+            "post_index": fake.postcode()
         }
+        insert_query = """
+        INSERT INTO rooms(addres, phone_number, auto, moto, city, post_index)
+        VALUES
+        (%(addres)s, %(phone_number)s, %(auto)s, %(moto)s, %(city)s, %(post_index)s)
+        """
+        cursor.execute(insert_query, room_data)
+
+
+def fill_details_in_rooms():
+            for j in range(get_first_value_from_column("rooms", "room_id"), get_last_value_from_column("rooms", "room_id") + 1):
+                for k in range(get_first_value_from_column("details", "detail_id"), get_last_value_from_column("details", "detail_id") + 1):
+                    details_in_rooms_data = {
+                        "room_id": j,
+                        "detail_id": k,
+                        "available": random.choice(["TRUE", "FALSE"])
+                    }
+                    insert_query = """
+                    INSERT INTO details_in_rooms(room_id, detail_id, available)
+                    VALUES (%(room_id)s, %(detail_id)s, %(available)s)
+                    """
+                    cursor.execute(insert_query, details_in_rooms_data)
+        
+def fill_services_in_rooms():
+            for j in range(get_first_value_from_column("rooms", "room_id"), get_last_value_from_column("rooms", "room_id") + 1):
+                for k in range(get_first_value_from_column("services", "service_id"), get_last_value_from_column("services", "service_id") + 1):
+                    services_in_rooms_data = {
+                        "room_id": j,
+                        "service_id": k,
+                        "available": random.choice(["TRUE", "FALSE"])
+                    }
+                    insert_query = """
+                    INSERT INTO services_in_rooms(room_id, service_id, available)
+                    VALUES (%(room_id)s, %(service_id)s, %(available)s)
+                    """
+                    cursor.execute(insert_query, services_in_rooms_data)
+
+
         
 def main():
     connect_to_db()
-    count_grouped_values(table="second_game", column="numorders")
+    fill_services_in_rooms()
     close_conn()
 main()
