@@ -93,6 +93,15 @@ def get_all_managers_id():
     for row in cursor:
         values.append(row)
     return values
+def get_all_masters_id():
+    values = []
+    select_query = f"""
+    SELECT employee_id FROM staff WHERE employee_role = 'Мастер'
+    """
+    cursor.execute(select_query)
+    for row in cursor:
+        values.append(row)
+    return values
 
 def fill_clients():
     for i in range(1500):
@@ -131,7 +140,7 @@ def fill_rooms():
     for i in range(15):
         auto_bool = random.choice(["TRUE", "FALSE"])
         room_data = {
-            "addres": fake.address(),
+            "addres": ' '.join(fake.address().split(', ')[1::]),
             "phone_number": adapt_phone_number(fake.phone_number()),
             "auto": auto_bool,
             "moto": ("TRUE" if auto_bool == "FALSE" else random.choice(["TRUE", "FALSE"])),
@@ -174,6 +183,28 @@ def fill_services_in_rooms():
                     """
                     cursor.execute(insert_query, services_in_rooms_data)
 
+def fill_user_names():
+    ids = get_all_values_from_table_column('staff', 'employee_id')
+    for id in ids:
+        update_query = f"""
+        UPDATE staff SET user_name = '{fake.user_name()}' WHERE employee_id = {id[0]}; 
+        """
+        cursor.execute(update_query)
+
+def fill_orders():
+    for i in range(1000):
+        order_data = {
+            "room_id": random.choice(get_all_values_from_table_column('rooms', 'room_id')),
+            "client_id": random.choice(get_all_values_from_table_column('clients', 'client_id')),
+            "order_date": fake.date_between(start_date=datetime(2024, 1, 1), end_date=datetime(2024, 11, 11)),
+            "state": random.choice(['Выполняется', 'Выполнен']),
+            "master_id": random.choice(get_all_masters_id())
+        }
+        insert_query = """
+        INSERT INTO orders (room_id, client_id, order_date, state, master_id)
+        VALUES(%(room_id)s, %(client_id)s, %(order_date)s, %(state)s, %(master_id)s)
+        """
+        cursor.execute(insert_query, order_data)
 
         
 def main():
