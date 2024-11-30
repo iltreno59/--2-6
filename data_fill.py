@@ -9,13 +9,14 @@ fake = Faker('ru_RU')
 def adapt_phone_number(phone_number):
     phone_number = ''.join(filter(str.isdigit, phone_number))
     phone_number = phone_number.replace(phone_number[0], '8', 1)
+    phone_number = phone_number.replace(' ', '')
     return phone_number
 
 def connect_to_db():
     conn_params = {
     "dbname": conn_options.db_name,
     "user": conn_options.user_name,
-    "password": conn_options.user_name,
+    "password": conn_options.password,
     "host": conn_options.host,
     "port": conn_options.port 
     }
@@ -239,6 +240,6 @@ def fill_orders():
         
 def main():
     connect_to_db()
-    fill_orders()
+    get_all_masters_id()
     close_conn()
 main()
