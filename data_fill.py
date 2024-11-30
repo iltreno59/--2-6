@@ -103,6 +103,19 @@ def get_all_masters_id():
         values.append(row)
     return values
 
+def get_all_masters_from_room(room_id):
+    values = []
+    select_query = f"""
+    SELECT staff.employee_id FROM staff 
+    LEFT JOIN staff_in_rooms ON staff_in_rooms.employee_id = staff.employee_id
+    WHERE room_id = {room_id[0]}
+    ORDER BY employee_id
+    """
+    cursor.execute(select_query)
+    for row in cursor:
+        values.append(row)
+    return values
+
 def fill_clients():
     for i in range(1500):
         client_data = {
@@ -191,14 +204,30 @@ def fill_user_names():
         """
         cursor.execute(update_query)
 
+def fill_staff_in_rooms():
+    room_ids = get_all_values_from_table_column('rooms', 'room_id')
+    employee_ids = get_all_values_from_table_column('staff', 'employee_id')
+    for i in range (1250):
+        insert_query = f"""
+        INSERT INTO staff_in_rooms (employee_id, room_id)
+        VALUES ({random.choice(employee_ids)[0]}, {random.choice(room_ids)[0]})
+        """
+        try:
+            cursor.execute(insert_query)
+            conn.commit()
+        except:
+            continue
+
 def fill_orders():
-    for i in range(1000):
+    for i in range(5000):
+        random_room = random.choice(get_all_values_from_table_column('rooms', 'room_id'))
+        random_master = random.choice(get_all_masters_from_room(random_room))
         order_data = {
-            "room_id": random.choice(get_all_values_from_table_column('rooms', 'room_id')),
+            "room_id": random_room,
             "client_id": random.choice(get_all_values_from_table_column('clients', 'client_id')),
             "order_date": fake.date_between(start_date=datetime(2024, 1, 1), end_date=datetime(2024, 11, 11)),
             "state": random.choice(['Выполняется', 'Выполнен']),
-            "master_id": random.choice(get_all_masters_id())
+            "master_id": random_master
         }
         insert_query = """
         INSERT INTO orders (room_id, client_id, order_date, state, master_id)
@@ -209,6 +238,6 @@ def fill_orders():
         
 def main():
     connect_to_db()
-    fill_services_in_rooms()
+    fill_orders()
     close_conn()
 main()
