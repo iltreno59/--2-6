@@ -25,7 +25,7 @@ def connect_to_db():
         global cursor
         cursor = conn.cursor()
     except psycopg2.Error as e:
-        rint("Ошибка при подключении к базе данных:", e)
+        print("Ошибка при подключении к базе данных:", e)
 
 def close_conn():
     conn.commit()
