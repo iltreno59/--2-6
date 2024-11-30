@@ -2,6 +2,7 @@ from faker import Faker
 import psycopg2
 import random
 from datetime import datetime
+import conn_options
 
 fake = Faker('ru_RU')
 
@@ -12,11 +13,11 @@ def adapt_phone_number(phone_number):
 
 def connect_to_db():
     conn_params = {
-    "dbname": "moto_and_cars",
-    "user": "postgres",
-    "password": "nikita",
-    "host": "localhost",
-    "port": "5432" 
+    "dbname": conn_options.db_name,
+    "user": conn_options.user_name,
+    "password": conn_options.user_name,
+    "host": conn_options.host,
+    "port": conn_options.port 
     }
     try:
         global conn
